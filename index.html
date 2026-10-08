@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EventX</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f5fb;--card:#fff;--tx:#1d1b2e;--mut:#6b6880;--pri:#6c4cf1;--pri2:#ff6b9d;--bd:#e4e1f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14121f;--card:#1f1c30;--tx:#f1effa;--mut:#a29fba;--bd:#322e4a}}
+:root[data-theme="dark"]{--bg:#14121f;--card:#1f1c30;--tx:#f1effa;--mut:#a29fba;--bd:#322e4a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;padding:28px 20px 36px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 16px}
+header .wrap{padding:0}
+nav{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.tabs{display:flex;gap:6px}
+.tabs button{background:rgba(255,255,255,.18);color:#fff;border:0;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:600}
+.tabs button.on{background:#fff;color:var(--pri)}
+h1{margin:22px 0 6px;font-size:clamp(24px,5vw,36px)}
+header p{margin:0;opacity:.9}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin:-20px 0 18px}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);width:100%}
+.bar input{flex:2;min-width:160px;width:auto;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.bar select{flex:1;min-width:120px;width:auto;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.cover{height:90px;display:flex;align-items:flex-end;padding:10px 14px;color:#fff;font-size:34px}
+.body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.body h3{margin:0;font-size:17px}
+.mut{color:var(--mut);font-size:13px}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;background:var(--bd);width:fit-content}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px}
+.price{font-weight:800}
+button.b{background:var(--pri);color:#fff;border:0;padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:700}
+button.b:disabled{opacity:.45;cursor:not-allowed}
+button.g{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+.sec{display:none;padding-bottom:30px}.sec.on{display:block}
+.form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;display:grid;gap:12px;max-width:560px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:13px;font-weight:600;display:grid;gap:5px}
+.ticket{background:var(--card);border:1px dashed var(--pri);border-radius:14px;padding:14px;display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
+.empty{text-align:center;color:var(--mut);padding:40px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9}
+.modal.on{display:flex}
+.modal .form{width:100%}
+footer{text-align:center;color:var(--mut);font-size:13px;padding:20px 16px 30px}
+h2{margin:6px 0 14px}
+#ub{background:#fff;color:var(--pri);border:0;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:700}
+.sw{display:flex;gap:6px}.sw button{flex:1}
+#pmsg,#amsg{color:#e11d48;font-size:13px;min-height:16px}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+ <nav><div class="logo">⚡ EventX</div>
+  <div class="tabs"><button data-t="ev" class="on">Events</button><button data-t="cr">Create</button><button data-t="ad" id="adb" style="display:none">Manage</button><button data-t="tk">My Tickets <span id="cnt"></span></button></div><button id="ub">Login</button></nav>
+ <h1>Discover events near you</h1><p>Find, create and book events in seconds.</p>
+</div></header>
+
+<main class="wrap">
+ <section id="ev" class="sec on">
+  <div class="bar"><input id="q" placeholder="Search events or city…"><select id="cat"></select></div>
+  <div class="grid" id="grid"></div>
+ </section>
+
+ <section id="cr" class="sec" style="padding-top:22px">
+  <h2 id="ct">Create an event</h2>
+  <div class="form">
+   <label>Event name<input id="n"></label>
+   <div class="two"><label>Category<select id="c"></select></label><label>City<input id="ci" placeholder="Jaipur"></label></div>
+   <div class="two"><label>Date<input type="date" id="d"></label><label>Price (₹, 0 = free)<input type="number" id="p" min="0" value="0"></label></div>
+   <label>Total seats<input type="number" id="s" min="1" value="100"></label>
+   <label>Description<textarea id="ds" rows="3"></textarea></label>
+   <button class="b" id="add">Publish event</button>
+   <div class="mut" id="msg"></div>
+  </div>
+ </section>
+
+ <section id="ad" class="sec" style="padding-top:22px">
+  <h2 id="ah">Manage events</h2>
+  <div class="grid" id="st" style="margin-bottom:18px"></div>
+  <div id="al"></div>
+ </section>
+
+ <section id="tk" class="sec" style="padding-top:22px">
+  <h2>My tickets</h2><div id="tl"></div>
+ </section>
+</main>
+
+<div class="modal" id="md"><div class="form">
+ <h2 id="mt" style="margin:0"></h2><div class="mut" id="mi"></div>
+ <label>Your name<input id="bn"></label>
+ <label>Tickets<input type="number" id="bq" min="1" max="10" value="1"></label>
+ <div class="price" id="tot"></div>
+ <div class="row"><button class="b g" id="cn">Cancel</button><button class="b" id="ok">Confirm booking</button></div>
+</div></div>
+
+<div class="modal" id="am"><div class="form">
+ <h2 style="margin:0" id="at">Welcome back</h2>
+ <div class="sw"><button class="b" id="mi1">Login</button><button class="b g" id="mi2">Sign up</button></div>
+ <label id="anw" style="display:none">Full name<input id="an" autocomplete="name"></label>
+ <label>Email<input id="ae" type="email" autocomplete="email"></label>
+ <label>Password (min 6)<input id="ap" type="password" autocomplete="current-password"></label>
+ <div id="amsg"></div>
+ <div class="row" style="margin-top:0"><button class="b g" id="acn">Close</button><button class="b" id="aok">Login</button></div>
+ <div class="mut">Demo login: accounts are saved only in this browser.</div>
+</div></div>
+
+
+
+<div class="modal" id="pm"><div class="form">
+ <h2 style="margin:0">Payment</h2><div class="mut" id="ps"></div>
+ <div class="sw"><button class="b" id="m1">UPI</button><button class="b g" id="m2">Card</button></div>
+ <div id="pu" style="display:grid;gap:12px"><label>UPI ID<input id="upi" placeholder="name@bank" autocomplete="off"></label></div>
+ <div id="pc" style="display:none;gap:12px">
+  <label>Card number<input id="cn1" inputmode="numeric" placeholder="1234 5678 9012 3456" autocomplete="off"></label>
+  <div class="two"><label>Expiry<input id="cex" inputmode="numeric" placeholder="MM/YY" maxlength="5" autocomplete="off"></label><label>CVV<input id="cvv" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label></div>
+  <label>Name on card<input id="cnm" autocomplete="off"></label>
+ </div>
+ <div id="pmsg"></div>
+ <div class="row" style="margin-top:0"><button class="b g" id="pcn">Back</button><button class="b" id="pay">Pay</button></div>
+ <div class="mut">Demo only. No real payment is made and nothing is stored.</div>
+</div></div>
+<script>
+var CATS=["Music","Tech","Sports","Art","Food","Business"];
+var EMO={Music:"🎵",Tech:"💻",Sports:"🏅",Art:"🎨",Food:"🍜",Business:"💼"};
+var COL={Music:"#6c4cf1",Tech:"#0ea5e9",Sports:"#16a34a",Art:"#ec4899",Food:"#f97316",Business:"#475569"};
+var events=[
+{id:1,name:"Jaipur Indie Music Night",cat:"Music",city:"Jaipur",date:"2026-11-14",price:499,seats:200,sold:134,desc:"Live indie bands under the stars."},
+{id:2,name:"DevFest Rajasthan",cat:"Tech",city:"Jaipur",date:"2026-11-22",price:0,seats:300,sold:211,desc:"Talks and workshops on web, AI and cloud."},
+{id:3,name:"Pink City Marathon",cat:"Sports",city:"Jaipur",date:"2026-12-06",price:350,seats:500,sold:402,desc:"5K, 10K and half marathon through the old city."},
+{id:4,name:"Street Food Carnival",cat:"Food",city:"Delhi",date:"2026-11-30",price:150,seats:400,sold:120,desc:"60+ stalls from across India."},
+{id:5,name:"Startup Founders Meetup",cat:"Business",city:"Mumbai",date:"2026-12-12",price:999,seats:80,sold:80,desc:"Network with founders and investors."},
+{id:6,name:"Modern Art Expo",cat:"Art",city:"Udaipur",date:"2026-12-18",price:250,seats:150,sold:47,desc:"Contemporary artists from 12 states."}];
+var tickets=[],nextId=7,cur=null;
+try{var s=JSON.parse(localStorage.getItem("eventx_v1")||"null");if(s){events=s.events;tickets=s.tickets;nextId=s.nextId}}catch(e){}
+function save(){try{localStorage.setItem("eventx_v1",JSON.stringify({events:events,tickets:tickets,nextId:nextId}))}catch(e){}}
+function $(i){return document.getElementById(i)}
+var users=[],sess=null,pend=null,mode="in";
+try{users=JSON.parse(localStorage.getItem("eventx_users")||"[]");sess=localStorage.getItem("eventx_sess")}catch(e){}
+function me(){return users.filter(function(u){return u.e===sess})[0]||null}
+function persist(){try{localStorage.setItem("eventx_users",JSON.stringify(users));if(sess)localStorage.setItem("eventx_sess",sess);else localStorage.removeItem("eventx_sess")}catch(e){}}
+function hash(p){var t="eventx:"+p;if(!(window.crypto&&crypto.subtle))return Promise.resolve(t);return crypto.subtle.digest("SHA-256",new TextEncoder().encode(t)).then(function(h){return Array.from(new Uint8Array(h)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")})}
+function need(cb){if(me()){cb();return}pend=cb;setMode("in");$("am").classList.add("on")}
+function setMode(m){mode=m;$("anw").style.display=m==="up"?"grid":"none";$("at").textContent=m==="up"?"Create your account":"Welcome back";$("aok").textContent=m==="up"?"Sign up":"Login";$("mi1").className="b"+(m==="in"?"":" g");$("mi2").className="b"+(m==="up"?"":" g");$("amsg").textContent=""}
+function userBtn(){var u=me();$("adb").style.display=u?"":"none";$("ub").textContent=u?"Logout ("+u.n.split(" ")[0]+")":"Login"}
+$("mi1").onclick=function(){setMode("in")};$("mi2").onclick=function(){setMode("up")};
+$("acn").onclick=function(){pend=null;$("am").classList.remove("on")};
+$("ub").onclick=function(){if(me()){if(confirm("Logout?")){sess=null;persist();userBtn();show("ev");render()}}else need(function(){})};
+$("aok").onclick=function(){
+ var e=$("ae").value.trim().toLowerCase(),p=$("ap").value,nm=$("an").value.trim();
+ if(!/^\S+@\S+\.\S+$/.test(e)||p.length<6){$("amsg").textContent="Enter a valid email and a 6+ character password.";return}
+ if(mode==="up"&&!nm){$("amsg").textContent="Please enter your name.";return}
+ hash(p).then(function(h){
+  var u=users.filter(function(x){return x.e===e})[0];
+  if(mode==="up"){if(u){$("amsg").textContent="Account already exists. Please login.";return}users.push({e:e,n:nm,h:h})}
+  else if(!u||u.h!==h){$("amsg").textContent="Wrong email or password.";return}
+  sess=e;persist();["an","ae","ap"].forEach(function(i){$(i).value=""});
+  $("am").classList.remove("on");userBtn();render();
+  if(pend){var f=pend;pend=null;f()}
+ });
+};
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fmt(d){try{return new Date(d+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}catch(e){return d}}
+function pr(p){return p?"₹"+p:"Free"}
+
+$("cat").innerHTML='<option value="">All categories</option>'+CATS.map(function(c){return"<option>"+c+"</option>"}).join("");
+$("c").innerHTML=CATS.map(function(c){return"<option>"+c+"</option>"}).join("");
+
+function render(){
+ var q=$("q").value.toLowerCase(),c=$("cat").value;
+ var list=events.filter(function(e){return(!c||e.cat===c)&&(e.name+" "+e.city).toLowerCase().indexOf(q)>-1});
+ $("grid").innerHTML=list.length?list.map(function(e){
+  var left=e.seats-e.sold;
+  return '<div class="card"><div class="cover" style="background:'+COL[e.cat]+'">'+EMO[e.cat]+'</div><div class="body"><span class="tag">'+e.cat+'</span><h3>'+esc(e.name)+'</h3><div class="mut">📍 '+esc(e.city)+' · 📅 '+fmt(e.date)+'</div><div class="mut">'+esc(e.desc)+'</div><div class="mut">'+(left?left+" seats left":"Sold out")+'</div><div class="row"><span class="price">'+pr(e.price)+'</span><button class="b" '+(left?"":"disabled")+' onclick="openBook('+e.id+')">'+(left?"Book now":"Sold out")+'</button></div></div></div>'}).join(""):'<div class="empty">No events found.</div>';
+ renderAdmin();
+ var mine=tickets.filter(function(t){return t.u===sess});
+ $("cnt").textContent=mine.length?"("+mine.length+")":"";
+ $("tl").innerHTML=mine.length?mine.map(function(t){
+  return '<div class="ticket"><div><b>'+esc(t.event)+'</b><div class="mut">'+esc(t.name)+' · '+t.qty+' ticket(s) · '+fmt(t.date)+(t.pay?" · "+(t.amt?"Paid \u20b9"+t.amt+" via ":"")+t.pay:"")+'</div><div class="mut">ID: '+t.id+'</div></div><button class="b g" onclick="cancelT(\''+t.id+'\')">Cancel</button></div>'}).join(""):'<div class="empty">No tickets yet. Book an event!</div>';
+}
+function openBook(id){need(function(){doBook(id)})}
+function doBook(id){
+ cur=events.filter(function(e){return e.id===id})[0];
+ $("mt").textContent=cur.name;$("mi").textContent=cur.city+" · "+fmt(cur.date);
+ $("bn").value=me().n;$("bq").max=Math.min(10,cur.seats-cur.sold);$("bq").value=1;upd();$("md").classList.add("on");
+}
+function upd(){$("tot").textContent="Total: "+pr(cur.price*(+$("bq").value||0))}
+$("bq").oninput=upd;
+$("cn").onclick=function(){$("md").classList.remove("on")};
+var bk=null,pmode="upi";
+function finish(q,n,pay,amt){
+ cur.sold+=q;
+ tickets.unshift({u:sess,id:"EX"+Date.now().toString(36).toUpperCase(),eid:cur.id,event:cur.name,date:cur.date,name:n,qty:q,pay:pay,amt:amt});
+ save();$("md").classList.remove("on");$("pm").classList.remove("on");render();show("tk");
+}
+function setPm(m){pmode=m;$("pu").style.display=m==="upi"?"grid":"none";$("pc").style.display=m==="card"?"grid":"none";$("m1").className="b"+(m==="upi"?"":" g");$("m2").className="b"+(m==="card"?"":" g");$("pmsg").textContent=""}
+function luhn(n){var t=0,d=false;for(var i=n.length-1;i>=0;i--){var x=+n[i];if(d){x*=2;if(x>9)x-=9}t+=x;d=!d}return t%10===0}
+$("ok").onclick=function(){
+ var q=+$("bq").value,n=$("bn").value.trim();
+ if(!n||q<1||q>cur.seats-cur.sold){alert("Please enter a valid name and ticket count.");return}
+ var amt=cur.price*q;
+ if(!amt){finish(q,n,"Free",0);return}
+ bk={q:q,n:n,amt:amt};
+ ["upi","cn1","cex","cvv","cnm"].forEach(function(i){$(i).value=""});
+ $("ps").textContent=cur.name+" · "+q+" ticket(s) · Total ₹"+amt;$("pay").textContent="Pay ₹"+amt;$("pay").disabled=false;
+ setPm("upi");$("pm").classList.add("on");
+};
+$("m1").onclick=function(){setPm("upi")};$("m2").onclick=function(){setPm("card")};
+$("pcn").onclick=function(){$("pm").classList.remove("on")};
+$("cn1").oninput=function(){this.value=this.value.replace(/\D/g,"").slice(0,19).replace(/(.{4})/g,"$1 ").trim()};
+$("cex").oninput=function(){var v=this.value.replace(/\D/g,"").slice(0,4);this.value=v.length>2?v.slice(0,2)+"/"+v.slice(2):v};
+$("pay").onclick=function(){
+ var err="";
+ if(pmode==="upi"){if(!/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test($("upi").value.trim()))err="Enter a valid UPI ID, e.g. name@okbank."}
+ else{
+  var num=$("cn1").value.replace(/\s/g,""),ex=$("cex").value.split("/"),mm=+ex[0],yy=+ex[1],now=new Date();
+  if(num.length<13||!luhn(num))err="Card number is not valid.";
+  else if(!(mm>=1&&mm<=12)||ex[1]===undefined||ex[1].length!==2||(2000+yy)*12+mm<now.getFullYear()*12+now.getMonth()+1)err="Card expiry is invalid or expired.";
+  else if(!/^\d{3,4}$/.test($("cvv").value))err="Enter a valid CVV.";
+  else if(!$("cnm").value.trim())err="Enter the name on the card.";
+ }
+ $("pmsg").textContent=err;if(err)return;
+ $("pay").disabled=true;$("pay").textContent="Processing…";
+ setTimeout(function(){finish(bk.q,bk.n,pmode==="upi"?"UPI":"Card",bk.amt)},1200);
+};
+function cancelT(id){
+ var t=tickets.filter(function(x){return x.id===id})[0];if(!t)return;
+ events.forEach(function(e){if(e.id===t.eid)e.sold-=t.qty});
+ tickets=tickets.filter(function(x){return x.id!==id});save();render();
+}
+var editId=null;
+function resetForm(){editId=null;["n","ci","d","ds"].forEach(function(i){$(i).value=""});$("p").value=0;$("s").value=100;$("msg").textContent="";$("add").textContent="Publish event";$("ct").textContent="Create an event"}
+function addEv(){
+ var n=$("n").value.trim(),ci=$("ci").value.trim(),d=$("d").value,s=+$("s").value;
+ if(!n||!ci||!d||s<1){$("msg").textContent="Please fill name, city, date and seats.";return}
+ var data={name:n,cat:$("c").value,city:ci,date:d,price:+$("p").value||0,seats:s,desc:$("ds").value.trim()||"No description."};
+ if(editId){
+  var e=events.filter(function(x){return x.id===editId})[0];
+  if(!e){resetForm();return}
+  if(s<e.sold){$("msg").textContent="Seats cannot be less than tickets already sold ("+e.sold+").";return}
+  for(var k in data)e[k]=data[k];
+  resetForm();save();render();show("ad");
+ }else{
+  data.id=nextId++;data.sold=0;data.o=sess;events.unshift(data);
+  resetForm();save();render();show("ev");
+ }
+}
+function isAdmin(){return users.length>0&&users[0].e===sess}
+function editEv(id){
+ var e=events.filter(function(x){return x.id===id})[0];if(!e)return;
+ editId=id;$("n").value=e.name;$("c").value=e.cat;$("ci").value=e.city;$("d").value=e.date;$("p").value=e.price;$("s").value=e.seats;$("ds").value=e.desc;
+ $("add").textContent="Save changes";$("ct").textContent="Edit event";$("msg").textContent="";show("cr");
+}
+function delEv(id){
+ var e=events.filter(function(x){return x.id===id})[0];if(!e)return;
+ var c=tickets.filter(function(t){return t.eid===id}).length;
+ if(!confirm('Delete "'+e.name+'"?'+(c?" "+c+" booked ticket(s) will also be cancelled.":"")))return;
+ events=events.filter(function(x){return x.id!==id});tickets=tickets.filter(function(t){return t.eid!==id});save();render();
+}
+function renderAdmin(){
+ if(!me()){$("st").innerHTML="";$("al").innerHTML="";return}
+ var m=events.filter(function(e){return isAdmin()||e.o===sess}),ids=m.map(function(e){return e.id});
+ var sold=m.reduce(function(a,e){return a+e.sold},0);
+ var rev=tickets.filter(function(t){return ids.indexOf(t.eid)>-1}).reduce(function(a,t){return a+(+t.amt||0)},0);
+ $("ah").textContent=isAdmin()?"Admin panel":"Manage my events";
+ $("st").innerHTML=[["Events",m.length],["Tickets sold",sold],["Revenue","\u20b9"+rev]].map(function(x){return '<div class="card"><div class="body"><div class="mut">'+x[0]+'</div><div class="price" style="font-size:26px">'+x[1]+'</div></div></div>'}).join("");
+ $("al").innerHTML=m.length?m.map(function(e){
+  return '<div class="ticket"><div><b>'+esc(e.name)+'</b><div class="mut">'+esc(e.city)+' · '+fmt(e.date)+' · '+e.sold+'/'+e.seats+' sold · '+pr(e.price)+'</div></div><div style="display:flex;gap:8px"><button class="b g" onclick="editEv('+e.id+')">Edit</button><button class="b g" style="color:#e11d48;border-color:#e11d48" onclick="delEv('+e.id+')">Delete</button></div></div>'}).join(""):'<div class="empty">No events yet. Use Create to add one.</div>';
+}
+$("add").onclick=function(){need(addEv)};
+function show(t){
+ document.querySelectorAll(".sec").forEach(function(s){s.classList.toggle("on",s.id===t)});
+ document.querySelectorAll(".tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});
+ window.scrollTo(0,0);
+}
+document.querySelectorAll(".tabs button").forEach(function(b){b.onclick=function(){var t=b.dataset.t;if(t==="cr")resetForm();if(t==="ev")show(t);else need(function(){show(t)})}});
+$("q").oninput=render;$("cat").onchange=render;
+userBtn();render();
+</script>
+</body>
+</html>
